@@ -8,7 +8,7 @@ int main(int argc, char** argv)
 {
 	try{
 
-	perception::KittiFlowStereoIO2015 stereo_reader("/home/hasan/Desktop/computer_vision/data/kitti/flow_stereo/data_scene_flow");	
+	perception::kitti::KittiFlowStereoIO2015 stereo_reader("/home/hasan/Desktop/computer_vision/data/kitti/flow_stereo/data_scene_flow");	
 	
 	cv::Mat frame1, frame2;
 	stereo_reader.get_specific_mono_frames(frame1,frame2,100);

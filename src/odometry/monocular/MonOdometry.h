@@ -10,9 +10,7 @@
 #include <opencv2/video/tracking.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/features2d/features2d.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/contrib/contrib.hpp>
-
+#include <vector>
 
 
 
@@ -23,7 +21,7 @@ namespace odometry{
 	public:
 		MonOdometry();
 
-		void setFrames(cv::Mat, cv::Mat);
+		void setFrames(cv::Mat f1, cv::Mat f2);
 
 		void setMinCornerDistance(const int&);
 

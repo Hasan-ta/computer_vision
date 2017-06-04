@@ -21,4 +21,6 @@ find_package( OpenCV REQUIRED )
 find_package( Boost COMPONENTS system filesystem REQUIRED)
 message(STATUS "Hasan Out: " ${Boost_INCLUDE_DIRS})
 
+set (KITTI_TOOLS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/src/kitti_tools )
+
 add_subdirectory(src)
