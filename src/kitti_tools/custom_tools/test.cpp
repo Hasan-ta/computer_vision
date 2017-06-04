@@ -2,6 +2,8 @@
 #include <exception>
 #include "custom_exceptions.h"
 
+
+using namespace cv;
 int main(int argc, char** argv)
 {
 	try{

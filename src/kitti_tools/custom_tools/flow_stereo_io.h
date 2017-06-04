@@ -1,5 +1,5 @@
-#ifndef PNG_READER_H
-#define PNG_READER_H
+#ifndef FLOW_STEREO_IO_H
+#define FLOW_STEREO_IO_H
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -15,11 +15,6 @@
 #include <map>
 #include <sstream>
 
-
-using namespace cv;
-using namespace std;
-
-
 namespace perception{
 
 
@@ -27,6 +22,9 @@ class KittiFlowStereoIO2015{
 public:
     KittiFlowStereoIO2015();
 
+    /*! Constructor. Initiates data paths and lists raw images  
+        \param path path to kitti_stereo_flow_data the folder should contain at least a "training" subfolder..  
+    */ 
     KittiFlowStereoIO2015(std::string path) : parent_directory(path){
         using namespace boost::filesystem;
 
@@ -100,8 +98,8 @@ public:
             else
                 image_path += "/image_3/";   
 
-            frame1 = imread(image_path + raw_sequence[current_position++], CV_LOAD_IMAGE_COLOR);
-            frame2 = imread(image_path + raw_sequence[current_position++], CV_LOAD_IMAGE_COLOR);
+            frame1 = cv::imread(image_path + raw_sequence[current_position++], CV_LOAD_IMAGE_COLOR);
+            frame2 = cv::imread(image_path + raw_sequence[current_position++], CV_LOAD_IMAGE_COLOR);
             return true;
         }
         else
@@ -133,8 +131,8 @@ public:
             else
                 image_path += "/image_3/";   
 
-            frame1 = imread(image_path + sss.str() + "_10.png", CV_LOAD_IMAGE_COLOR);
-            frame2 = imread(image_path + sss.str() + "_11.png", CV_LOAD_IMAGE_COLOR);
+            frame1 = cv::imread(image_path + sss.str() + "_10.png", CV_LOAD_IMAGE_COLOR);
+            frame2 = cv::imread(image_path + sss.str() + "_11.png", CV_LOAD_IMAGE_COLOR);
             return true;
         }
         else
@@ -152,10 +150,10 @@ public:
             std::string left_path(training_path+"/image_2/");
             std::string right_path(training_path+"/image_3/");
 
-            frameL1 = imread(left_path + raw_sequence[current_position], CV_LOAD_IMAGE_COLOR);
-            frameR1 = imread(right_path + raw_sequence[current_position++], CV_LOAD_IMAGE_COLOR);
-            frameL2 = imread(left_path + raw_sequence[current_position], CV_LOAD_IMAGE_COLOR);
-            frameR2 = imread(right_path + raw_sequence[current_position++], CV_LOAD_IMAGE_COLOR);
+            frameL1 = cv::imread(left_path + raw_sequence[current_position], CV_LOAD_IMAGE_COLOR);
+            frameR1 = cv::imread(right_path + raw_sequence[current_position++], CV_LOAD_IMAGE_COLOR);
+            frameL2 = cv::imread(left_path + raw_sequence[current_position], CV_LOAD_IMAGE_COLOR);
+            frameR2 = cv::imread(right_path + raw_sequence[current_position++], CV_LOAD_IMAGE_COLOR);
             return true;
         }
         else
@@ -182,10 +180,10 @@ public:
             std::string left_path(training_path+"/image_2/");
             std::string right_path(training_path+"/image_3/");
 
-            frameL1 = imread(left_path + sss.str() + "_10.png", CV_LOAD_IMAGE_COLOR);
-            frameR1 = imread(right_path + sss.str() + "_10.png", CV_LOAD_IMAGE_COLOR);
-            frameL2 = imread(left_path + sss.str() + "_11.png", CV_LOAD_IMAGE_COLOR);
-            frameR2 = imread(right_path + sss.str() + "_11.png", CV_LOAD_IMAGE_COLOR);
+            frameL1 = cv::imread(left_path + sss.str() + "_10.png", CV_LOAD_IMAGE_COLOR);
+            frameR1 = cv::imread(right_path + sss.str() + "_10.png", CV_LOAD_IMAGE_COLOR);
+            frameL2 = cv::imread(left_path + sss.str() + "_11.png", CV_LOAD_IMAGE_COLOR);
+            frameR2 = cv::imread(right_path + sss.str() + "_11.png", CV_LOAD_IMAGE_COLOR);
 
             return true;
         }
