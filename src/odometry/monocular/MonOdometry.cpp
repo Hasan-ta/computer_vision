@@ -66,7 +66,7 @@ namespace odometry{
 			/* Workflow:
 			 * 	1- Detect Features in frame1 using shi-tomasi
 			 *	2- Use Pyramidal KLT to estimate motion
-			 * 	3- Estimate Fundamental Matrix F (RNASC, 8-Point, 5-Point )
+			 * 	3- Estimate Fundamental Matrix F (RANSAC, 8-Point, 5-Point )
 			 *	4- Compute Essential Matrix from F and Calibration Matrix K
 			 *	5- Find R and T by Essential matrix decomposition
 			*/
@@ -117,9 +117,11 @@ namespace odometry{
      		}
 
      		#ifdef DEBUG
-     		std::cerr << "Tracked " << corners_.size() << " features." << std::endl;
+     			std::cerr << "Tracked " << corners_.size() << " features." << std::endl;
      			draw_flow_arrows(gray_f1, corners_ , tracked_features);
      		#endif
+
+     		// Estimating Fundamental Matrix
 
 		}
 

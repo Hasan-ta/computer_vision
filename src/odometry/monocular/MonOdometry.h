@@ -39,9 +39,6 @@ namespace odometry{
 		bool use_harris_;
 		float corners_quality_;
 
-		// 
-
-
 	};
 }
 }
