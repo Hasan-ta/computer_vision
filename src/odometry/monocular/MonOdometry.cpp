@@ -57,6 +57,44 @@ namespace odometry{
 		min_corner_distance_ = dist;
 	}
 
+	void MonOdometry::extractFeatures()
+	{
+		detector_roi_ = cv::Mat(cv::Size(0,0), CV_8UC1);
+		corners_.clear();
+		setMinCornerDistance(20);
+		cv::goodFeaturesToTrack(gray_f1, corners_, max_corners_, corners_quality_,
+			min_corner_distance_, detector_roi_,
+			detector_block_size_, use_harris_);
+	}
+
+	void MonOdometry::trackFeatures()
+	{
+		tracked_features_.clear();
+	  	std::vector<float> err;
+	  	std::vector<uchar> status;					
+		cv::Size winSize=cv::Size(21,21);																								
+		cv::TermCriteria termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01);
+
+		cv::calcOpticalFlowPyrLK(gray_f1, gray_f2, corners_, tracked_features_, status, err, winSize, 3, termcrit, 0, 0.001);
+
+		int indexCorrection = 0;
+	  	for( int i=0; i<status.size(); i++)
+ 		{  
+ 			cv::Point2f pt = tracked_features_.at(i- indexCorrection);
+ 			if ((status.at(i) == 0)||(pt.x<0)||(pt.y<0))	
+ 			{
+     		  	if((pt.x<0)||(pt.y<0))	
+     		  	{
+     		  		status.at(i) = 0;
+     		  	}
+	     		corners_.erase (corners_.begin() + i - indexCorrection);
+	     		tracked_features_.erase (tracked_features_.begin() + i - indexCorrection);
+	     		indexCorrection++;
+ 			}
+
+ 		}
+	}
+
 	void MonOdometry::calculateMotion()
 	{
 		if(!new_frames_)
@@ -76,12 +114,7 @@ namespace odometry{
 			cv::cvtColor(frame1_, gray_f1, CV_BGR2GRAY);
 			cv::cvtColor(frame1_, gray_f2, CV_BGR2GRAY);
 
-			detector_roi_ = cv::Mat(cv::Size(0,0), CV_8UC1);
-			corners_.clear();
-			this->setMinCornerDistance(20);
-			cv::goodFeaturesToTrack(gray_f1, corners_, max_corners_, corners_quality_,
-				min_corner_distance_, detector_roi_,
-				detector_block_size_, use_harris_);
+			extractFeatures();
 
 			#ifdef DEBUG
 				std::cerr << "roi size: " << detector_roi_.size() << std::endl;
@@ -91,38 +124,14 @@ namespace odometry{
 
 
 			// Calculate Optical Flow
-		  	std::vector<float> err;
-		  	std::vector<uchar> status;					
-			cv::Size winSize=cv::Size(21,21);																								
-			cv::TermCriteria termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01);
-
-			std::vector<cv::Point2f> tracked_features;
-  			cv::calcOpticalFlowPyrLK(gray_f1, gray_f2, corners_, tracked_features, status, err, winSize, 3, termcrit, 0, 0.001);
-
-  			int indexCorrection = 0;
-		  	for( int i=0; i<status.size(); i++)
-     		{  
-     			cv::Point2f pt = tracked_features.at(i- indexCorrection);
-     			if ((status.at(i) == 0)||(pt.x<0)||(pt.y<0))	
-     			{
-	     		  	if((pt.x<0)||(pt.y<0))	
-	     		  	{
-	     		  		status.at(i) = 0;
-	     		  	}
-		     		corners_.erase (corners_.begin() + i - indexCorrection);
-		     		tracked_features.erase (tracked_features.begin() + i - indexCorrection);
-		     		indexCorrection++;
-     			}
-
-     		}
+			trackFeatures()
 
      		#ifdef DEBUG
      			std::cerr << "Tracked " << corners_.size() << " features." << std::endl;
-     			draw_flow_arrows(gray_f1, corners_ , tracked_features);
+     			draw_flow_arrows(gray_f1, corners_ , tracked_features_);
      		#endif
 
      		// Estimating Fundamental Matrix
-
 		}
 
 	}

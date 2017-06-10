@@ -21,10 +21,25 @@ namespace odometry{
 	public:
 		MonOdometry();
 
+		/**
+		 * @brief      Sets the frames.
+		 *
+		 * @param[in]  f1    The f 1
+		 * @param[in]  f2    The f 2
+		 */
 		void setFrames(cv::Mat f1, cv::Mat f2);
 
-		void setMinCornerDistance(const int&);
 
+		/**
+		 * @brief      Sets the minimum corner distance.
+		 *
+		 * @param[in]  distance  The distance
+		 */
+		void setMinCornerDistance(const int& distance);
+
+		/**
+		 * @brief      Calculates the motion.
+		 */
 		void calculateMotion();
 
 
@@ -38,6 +53,17 @@ namespace odometry{
 		cv::Mat detector_roi_;
 		bool use_harris_;
 		float corners_quality_;
+		std::vector<cv::Point2f> tracked_features_;
+
+
+		/**
+		 * @brief      { function_description }
+		 */
+		virtual void extractFeatures();
+
+
+		virtual void trackFeatures();
+
 
 	};
 }
