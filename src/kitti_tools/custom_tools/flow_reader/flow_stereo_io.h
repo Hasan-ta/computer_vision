@@ -8,7 +8,7 @@
 #include <dirent.h>
 #include <exception>
 #include <boost/filesystem.hpp>
-#include "custom_exceptions.h"
+//#include "custom_exceptions.h"
 #include <vector>
 #include <algorithm>
 #include "common.h"
@@ -37,7 +37,7 @@ namespace kitti{
         calibration_path(calib_path)
         {
             set_data_path(parent_directory);
-            cal_readr.set_calibration_folder(calibration_path);
+            cal_reader.set_calibration_folder(calibration_path);
         }
 
         virtual ~KittiFlowStereoIO2015(){}
@@ -61,7 +61,7 @@ namespace kitti{
                 }
             }
             if(!current_path_valid)
-                throw invalid_path;
+                throw std::runtime_error("Invalid Kitti Flow Data Path");
             if(!testing_avail)
                 std::cerr << "WARNING: Path only contains training data. Test data won't be read\n";
         }
@@ -85,10 +85,11 @@ namespace kitti{
         {
             if(current_position < raw_sequence.size())
             {
+                std::string image_path;
                 if(train)
-                    std::string image_path(training_path);
+                    image_path = training_path;
                 else
-                    std::string image_path(testing_path);
+                    image_path = testing_path;
 
                 if(left)
                 {
@@ -108,7 +109,7 @@ namespace kitti{
             }
         }
 
-        bool get_specific_mono_frames(cv::Mat& frame1, cv::Mat& frame2, int frame_no, bool left=true)
+        bool get_specific_mono_frames(cv::Mat& frame1, cv::Mat& frame2, int frame_no, bool left=true, bool train = true)
         {
             if(frame_no < raw_sequence.size())
             {
@@ -122,10 +123,11 @@ namespace kitti{
                 else
                     sss << "000" << frame_no;
 
+                std::string image_path;
                 if(train)
-                    std::string image_path(training_path);
+                    image_path = training_path;
                 else
-                    std::string image_path(testing_path);
+                    image_path = testing_path;
 
                 if(left)
                     image_path += "/image_2/";
@@ -148,15 +150,16 @@ namespace kitti{
         {
             if(current_position < raw_sequence.size())
             {
+                std::string left_path, right_path;
                 if(train)
                 {
-                    std::string left_path(training_path+"/image_2/");
-                    std::string right_path(training_path+"/image_3/");
+                    left_path = training_path+"/image_2/";
+                    right_path = training_path+"/image_3/";
                 }
                 else
                 {
-                    std::string left_path(testing_path+"/image_2/");
-                    std::string right_path(testing_path+"/image_3/");
+                    left_path = testing_path+"/image_2/";
+                    right_path = testing_path+"/image_3/";
                 }
 
 
@@ -173,7 +176,7 @@ namespace kitti{
             }
         }
 
-        bool get_specific_mono_frames(cv::Mat& frameL1, cv::Mat& frameL2, cv::Mat& frameR1, cv::Mat& frameR2, int frame_no, bool train = true)
+        bool get_specific_stereo_frames(cv::Mat& frameL1, cv::Mat& frameL2, cv::Mat& frameR1, cv::Mat& frameR2, int frame_no, bool train = true)
         {
             if(frame_no < raw_sequence.size())
             {
@@ -187,15 +190,16 @@ namespace kitti{
                 else
                     sss << "000" << frame_no;
 
+                std::string left_path, right_path;
                 if(train)
                 {
-                    std::string left_path(training_path+"/image_2/");
-                    std::string right_path(training_path+"/image_3/");
+                    left_path = training_path+"/image_2/";
+                    right_path = training_path+"/image_3/";
                 }
                 else
                 {
-                    std::string left_path(testing_path+"/image_2/");
-                    std::string right_path(testing_path+"/image_3/");
+                    left_path = testing_path+"/image_2/";
+                    right_path = testing_path+"/image_3/";
                 }
 
                 frameL1 = cv::imread(left_path + sss.str() + "_10.png", CV_LOAD_IMAGE_COLOR);
@@ -213,24 +217,19 @@ namespace kitti{
 
         }
 
-        bool get_current_frame_cam2cam_calibration(bool left = true, bool train = true)
+        bool get_current_frame_cam2cam_calibration(FlowCamCalibParams& params, bool left = true, bool train = true)
         {
-            cam2camCalibrationParams params;
-            get_specific_frame_cam2cam_calibration(current_position, left, train, params)
+            get_specific_frame_cam2cam_calibration(current_position, params, left, train);
             return true;
         }
 
-        bool get_specific_frame_cam2cam_calibration(int frame_no, bool left = true, bool train = true, cam2camCalibrationParams& params)
+        bool get_specific_frame_cam2cam_calibration(int frame_no, FlowCamCalibParams& params, bool left = true, bool train = true)
         {
-            cal_reader.get_cam2cam_calibration(frame_no, params, train);
-            current_cam_params = perception::utils::CamParams(params.ExtMat, params.K, params.D, params.S_rect)
-            current_cam_params.setProjectionMatrix(params.P_rect);
+            cam2camFlowCalibrationParams p_4;
+            cal_reader.get_cam2cam_calibration(frame_no, p_4, train);
+            int left_right = left? 2 : 3;
+            params.set_camera(p_4.four_cameras_params[left_right]);
             return true;
-        }
-
-        void get_current_frame_P_rect(bool left = true, bool train = true)
-        {
-            get_specific_frame_P_rect(current_position, left, train);
         }
 
         int get_current_position()
@@ -255,8 +254,8 @@ namespace kitti{
         int current_position = 0;
         std::vector<std::string> raw_sequence;
 
+        std::string calibration_path;
         FlowCalibrationReader cal_reader;
-        perception::utils::CamParams current_cam_params;
 
     };
 

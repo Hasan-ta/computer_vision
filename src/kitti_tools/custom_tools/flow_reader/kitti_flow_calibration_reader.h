@@ -13,8 +13,8 @@
 namespace perception{
 namespace kitti{
 
-typedef struct CamCalibParams{
-	CamCalibParams()
+typedef struct FlowCamCalibParams{
+	FlowCamCalibParams()
 	{
 		S = cv::Size(0,0);
 		K = cv::Mat::zeros(3,3,CV_64F);
@@ -23,6 +23,26 @@ typedef struct CamCalibParams{
 		S_rect = cv::Size(0,0);
 		R_rect = cv::Mat::zeros(3,3,CV_64F);
 		P_rect = cv::Mat::zeros(3,4,CV_64F);
+	}
+
+
+	void setSize(const cv::Size _S){S = _S;}
+	void setSize_rect(const cv::Size _S_rect){S_rect = _S_rect;}
+	void setK(const cv::Mat& _K){K = _K.clone();}
+	void setD(const cv::Mat& _D){D = _D.clone();}
+	void setExtMat(const cv::Mat& _ExtMat){ExtMat = _ExtMat.clone();}
+	void setR_rect(const cv::Mat& _R_rect){R_rect = _R_rect.clone();}
+	void setP_rect(const cv::Mat& _P_rect){P_rect = _P_rect.clone();}
+
+	void set_camera(FlowCamCalibParams& cam)
+	{
+		setSize(cam.S);
+		setK(cam.K);
+		setD(cam.D);
+		setExtMat(cam.ExtMat);
+		setSize_rect(cam.S_rect);
+		setR_rect(cam.R_rect);
+		setP_rect(cam.P_rect);
 	}
 
 	cv::Size getSize() {return S;}
@@ -36,11 +56,11 @@ typedef struct CamCalibParams{
 	cv::Size S, S_rect;
 	cv::Mat K, D, ExtMat, R_rect, P_rect;
 
-}CamCalibParams;
+}FlowCamCalibParams;
 
 
-typedef struct cam2camCalibrationParams{
-	std::vector<CamCalibParams> four_cameras_params = std::vector<CamCalibParams>(4,CamCalibParams());
+typedef struct cam2camFlowCalibrationParams{
+	std::vector<FlowCamCalibParams> four_cameras_params = std::vector<FlowCamCalibParams>(4,FlowCamCalibParams());
 	void setSize(int camNo, const cv::Size S){four_cameras_params[camNo].S = S;}
 	void setSize_rect(int camNo, const cv::Size S_rect){four_cameras_params[camNo].S_rect = S_rect;}
 	void setK(int camNo, const cv::Mat& K){four_cameras_params[camNo].K = K.clone();}
@@ -49,7 +69,7 @@ typedef struct cam2camCalibrationParams{
 	void setR_rect(int camNo, const cv::Mat& R_rect){four_cameras_params[camNo].R_rect = R_rect.clone();}
 	void setP_rect(int camNo, const cv::Mat& P_rect){four_cameras_params[camNo].P_rect = P_rect.clone();}
 
-	void set_camera(int camNo, CamCalibParams& cam)
+	void set_camera(int camNo, FlowCamCalibParams& cam)
 	{
 		setSize(camNo, cam.S);
 		setK(camNo,cam.K);
@@ -60,7 +80,7 @@ typedef struct cam2camCalibrationParams{
 		setP_rect(camNo, cam.P_rect);
 	}
 
-}cam2camCalibrationParams;
+}cam2camFlowCalibrationParams;
 
 
 /**
@@ -69,6 +89,8 @@ typedef struct cam2camCalibrationParams{
 class FlowCalibrationReader
 {
 public:
+
+	FlowCalibrationReader(){}
 
 	/**
 	 * @brief      { function_description }
@@ -99,7 +121,7 @@ public:
 	 * @param      param    The parameter
 	 * @param[in]  train    The train
 	 */
-	void get_cam2cam_calibration(const int frameNo, cam2camCalibrationParams& param, bool train = true);
+	void get_cam2cam_calibration(const int frameNo, cam2camFlowCalibrationParams& param, bool train = true);
 
 private:
 
@@ -109,7 +131,7 @@ private:
 	 * @param[in]  calFile  The cal file
 	 * @param      params   The parameters
 	 */
-	void cam2cam_file_reader(const std::string& calFile, cam2camCalibrationParams& params);
+	void cam2cam_file_reader(const std::string& calFile, cam2camFlowCalibrationParams& params);
 
 
 	/**

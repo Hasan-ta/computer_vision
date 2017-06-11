@@ -16,6 +16,8 @@ namespace kitti{
     {
         using namespace boost::filesystem;
 
+        calibration_folder_ = path;
+
         for (directory_iterator itr(calibration_folder_); itr!=directory_iterator(); ++itr)
         {
             if(itr->path().filename() == "training" && is_directory(*itr))
@@ -35,7 +37,7 @@ namespace kitti{
             std::cerr << "WARNING: Path only contains training calibration data. Test calibration data won't be read\n";
     }
 
-    void FlowCalibrationReader::get_cam2cam_calibration(const int frameNo, cam2camCalibrationParams& param, bool train)
+    void FlowCalibrationReader::get_cam2cam_calibration(const int frameNo, cam2camFlowCalibrationParams& param, bool train)
     {
         bool cal_avail=(train)? training_cal_avail_ : testing_cal_avail_;
         if(cal_avail)
@@ -136,7 +138,7 @@ namespace kitti{
     }
 
 
-    void FlowCalibrationReader::cam2cam_file_reader(const std::string& calFile, cam2camCalibrationParams& params)
+    void FlowCalibrationReader::cam2cam_file_reader(const std::string& calFile, cam2camFlowCalibrationParams& params)
     {
     	std::ifstream fs(calFile);
 
@@ -148,7 +150,7 @@ namespace kitti{
     	{
     		std::string line;
     		int lineNo = 0;
-    		CamCalibParams temp;
+    		FlowCamCalibParams temp;
 			while (std::getline(fs, line))
 			{
 				std::vector<std::string> label_values = split(line,':');

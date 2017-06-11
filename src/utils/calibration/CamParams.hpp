@@ -203,7 +203,7 @@ private:
 
 	cv::Size imageSize_; /*!< Image Size */
 
-	cv::Mat projectionMat;
+	cv::Mat projectionMat_;
 
 	bool cameraExtrensicMatAvail_ = false, camMatAvail_ = false, 
 		 distCoeffsAvail_ = false, imageSizeAvail_ = false;

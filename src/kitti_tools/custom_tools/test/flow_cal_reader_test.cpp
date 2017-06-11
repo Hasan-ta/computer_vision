@@ -7,7 +7,7 @@ int main(int argc, char** argv)
 
 	try
 	{
-		perception::kitti::cam2camCalibrationParams params;
+		perception::kitti::cam2camFlowCalibrationParams params;
 		reader.get_cam2cam_calibration(0,params);
 		cv::Mat K , D, ExtMat, R_rect, P_rect;
 
