@@ -35,7 +35,7 @@ namespace kitti{
             std::cerr << "WARNING: Path only contains training calibration data. Test calibration data won't be read\n";
     }
 
-    cam2camCalibrationParams FlowCalibrationReader::get_cam2cam_calibration(const int frameNo, bool train)
+    void FlowCalibrationReader::get_cam2cam_calibration(const int frameNo, cam2camCalibrationParams& param, bool train)
     {
         bool cal_avail=(train)? training_cal_avail_ : testing_cal_avail_;
         if(cal_avail)
@@ -56,8 +56,7 @@ namespace kitti{
             else
                 filePath = testing_cal_path_+"/calib_cam_to_cam/"+sss.str()+".txt";
 
-            cam2camCalibrationParams returnParams;
-            cam2cam_file_reader(filePath, returnParams);
+            cam2cam_file_reader(filePath, param);
         }
         else
         {
@@ -69,46 +68,40 @@ namespace kitti{
     cv::Size FlowCalibrationReader::sizeParser(std::string& size_values)
     {
 		std::vector<std::string> values = split(size_values, ' ');
-		cv::Size ret(stringToNumber<int>(values[0]), stringToNumber<int>(values[1]));
+		cv::Size ret((int)stringToNumber<double>(values[1]), (int)stringToNumber<double>(values[2]));
 		return ret;
     }
 
-    cv::Mat FlowCalibrationReader::KParser(std::string& K_values)
+    void FlowCalibrationReader::KParser(std::string& K_values, cv::Mat& K_mat)
     {
 		std::vector<std::string> values = split(K_values, ' ');
-		cv::Mat ret(3,3,CV_64F);
 
-		uint8_t counter = 0;
+		uint8_t counter = 1;
 		for (uint8_t i = 0; i < 3; ++i)
 			for (uint8_t j = 0; j < 3; ++j)
 			{
-				ret.at<double>(i,j) = stringToNumber<double>(values[counter]);
+				K_mat.at<double>(i,j) = stringToNumber<double>(values[counter]);
 				counter++;
 			}
-
-		return ret;
     }
 
-    cv::Mat FlowCalibrationReader::DParser(std::string& D_values)
+    void FlowCalibrationReader::DParser(std::string& D_values, cv::Mat& D_mat)
     {
 		std::vector<std::string> values = split(D_values, ' ');
-		cv::Mat ret(1,5,CV_64F);
 
-		uint8_t counter = 0;
+		uint8_t counter = 1;
 		for (uint8_t j = 0; j < 5; ++j)
 		{
-			ret.at<double>(1,j) = std::atof(values[counter].c_str());
+			D_mat.at<double>(0,j) = stringToNumber<double>(values[counter].c_str());
 			counter++;
 		}
-
-		return ret;
     }
 
     void FlowCalibrationReader::RParser(std::string& R_values, cv::Mat& P_mat)
     {
 		std::vector<std::string> values = split(R_values, ' ');
 
-		uint8_t counter = 0;
+		uint8_t counter = 1;
 		for (uint8_t i = 0; i < 3; ++i)
 			for (uint8_t j = 0; j < 3; ++j)
 			{
@@ -121,12 +114,25 @@ namespace kitti{
     {
 		std::vector<std::string> values = split(T_values, ' ');
 
-		uint8_t counter = 0;
+		uint8_t counter = 1;
 		for (uint8_t j = 0; j < 3; ++j)
 		{
 			P_mat.at<double>(j,3) = stringToNumber<double>(values[counter]);
 			counter++;
 		}
+    }
+
+    void FlowCalibrationReader::PParser(std::string& P_values, cv::Mat& P_mat)
+    {
+		std::vector<std::string> values = split(P_values, ' ');
+
+		uint8_t counter = 1;
+		for (uint8_t i = 0; i < 3; ++i)
+			for (uint8_t j = 0; j < 4; ++j)
+			{
+				P_mat.at<double>(i,j) = stringToNumber<double>(values[counter]);
+				counter++;
+			}
     }
 
 
@@ -142,6 +148,7 @@ namespace kitti{
     	{
     		std::string line;
     		int lineNo = 0;
+    		CamCalibParams temp;
 			while (std::getline(fs, line))
 			{
 				std::vector<std::string> label_values = split(line,':');
@@ -149,34 +156,86 @@ namespace kitti{
 
 				if(labels.size()<=1)
 				{
-					std::runtime_error("Error Reading Calibration File: " + calFile);
+					std::stringstream ss;
+					ss << "Invalid calibration file: " << calFile << ", at line: " << lineNo;
+					throw std::runtime_error(ss.str());
 				}
-				else if(labels.size()==2)
+				else if(labels.size()==2 || labels.size()==3)
 				{
-					int camIndex = (stringToNumber<int>(labels[1]) < 3) ? stringToNumber<int>(labels[1]): 
-							throw std::runtime_error("Error reading calibration file: " + calFile);
-					if(labels[0] == "S")
-						params.four_cameras_params[camIndex].S = sizeParser(label_values[1]);
-					else if(labels[0] == "K")
-						params.four_cameras_params[camIndex].K = KParser(label_values[1]);
-					else if(labels[0] == "D")
-						params.four_cameras_params[camIndex].D = DParser(label_values[1]);
-					else if(labels[0] == "R")
-						RParser(label_values[1], params.four_cameras_params[camIndex].P);
-					else if(labels[0] == "T")
-						TParser(label_values[1], params.four_cameras_params[camIndex].P);
-					else if (labels[0] == "calib" || labels[0] == "corner")
-						;
+					int camIndex;
+					if(labels.size() == 2)
+						camIndex = (stringToNumber<int>(labels[1]) <= 3) ? stringToNumber<int>(labels[1]): 
+								throw std::runtime_error("Error reading calibration file: " + calFile);
 					else
-					{
-						std::stringstream ss;
-						ss << "Invalid calibration file: " << calFile << ", at line: " << lineNo;
-						throw std::runtime_error(ss.str());
+						camIndex = (stringToNumber<int>(labels[2]) <= 3) ? stringToNumber<int>(labels[2]): 
+								throw std::runtime_error("Error reading calibration file: " + calFile);
+
+					{			
+
+							if(labels[0] == "S")
+							{
+								if(labels[1] == "rect")
+								{
+									temp.S_rect = sizeParser(label_values[1]);
+									params.setSize_rect(camIndex,temp.S_rect);
+								}
+								else
+								{
+									temp.S = sizeParser(label_values[1]);
+									params.setSize(camIndex,temp.S);
+								}
+							}
+
+							else if(labels[0] == "K")
+							{
+								KParser(label_values[1], temp.K);
+								params.setK(camIndex,temp.K);
+							}
+
+							else if(labels[0] == "D")
+							{
+								DParser(label_values[1], temp.D);
+								params.setD(camIndex,temp.D);
+							}
+
+							else if(labels[0] == "R")
+							{
+								if(labels[1] == "rect")
+								{
+									RParser(label_values[1], temp.R_rect);
+									params.setR_rect(camIndex,temp.R_rect);
+								}
+								else
+								{
+									RParser(label_values[1], temp.P);
+									params.setP(camIndex,temp.P);
+
+								}
+							}
+
+							else if(labels[0] == "T")
+							{
+								TParser(label_values[1], temp.P);
+								params.setP(camIndex,temp.P);
+							}
+
+							else if(labels[0] == "P")
+							{
+								PParser(label_values[1], temp.P_rect);
+								params.setP_rect(camIndex, temp.P_rect);
+							}
+
+							else if(labels[0] == "calib" || labels[0] == "corner")
+								;
+
+							else
+							{
+								std::stringstream ss;
+								ss << "Invalid calibration file: " << calFile << ", at line: " << lineNo;
+								throw std::runtime_error(ss.str());
+							}
 					}
-				}
-				else if(labels.size()==3)
-				{
-					;
+
 				}
 				lineNo++;
 			}

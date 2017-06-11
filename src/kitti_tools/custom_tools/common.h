@@ -30,27 +30,15 @@ namespace kitti{
         - a vector of strings containing separated elements
     ***************************************************************************************/
 
-    inline std::vector<std::string> split(const std::string& s, char separator)
+    inline std::vector<std::string> split(const std::string& s, char delim)
     {
-        std::vector<std::string> ret;
-        typedef std::string::size_type string_size;
-        string_size i =0;
-        while(i != s.size())
-        {
-            while(i != s.size() && s[i] == separator)
-                ++i;
-
-            string_size j = i;
-            while(j != s.size() && s[j] != separator)
-                ++j;
-
-            if(i != j)
-            {
-                ret.push_back(s.substr(i,j-i));
-                i=j;
-            }
-        }
-        return ret;
+        std::vector<std::string> tokens;
+				std::stringstream ss(s);
+				std::string item;
+				while (std::getline(ss, item, delim)) {
+				    tokens.push_back(item);
+				}
+				return tokens;
     }
 
 
