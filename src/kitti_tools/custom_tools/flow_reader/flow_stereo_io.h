@@ -238,11 +238,6 @@ namespace kitti{
         int current_position = 0;
         std::vector<std::string> raw_sequence;
 
-        void calibration_file_reader(std::string calFile)
-        {
-            std::fstream
-        }
-
     };
 
 }

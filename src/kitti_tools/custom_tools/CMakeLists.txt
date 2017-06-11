@@ -11,4 +11,4 @@ link_directories(${Boost_LIBRARY_DIR})
 #target_link_libraries( DisplayImage ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
 add_executable( flow_cal_test test/flow_cal_reader_test.cpp ${FLOW_SOURCE_DIR}/kitti_flow_calibration_reader.cpp)
-target_link_libraries( flow_cal_test ${Boost_LIBRARIES})
+target_link_libraries( flow_cal_test ${Boost_LIBRARIES} ${OpenCV_LIBS})

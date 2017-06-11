@@ -35,7 +35,7 @@ namespace kitti{
             std::cerr << "WARNING: Path only contains training calibration data. Test calibration data won't be read\n";
     }
 
-    void FlowCalibrationReader::get_cam2cam_calibration(const int frameNo, bool train)
+    cam2camCalibrationParams FlowCalibrationReader::get_cam2cam_calibration(const int frameNo, bool train)
     {
         bool cal_avail=(train)? training_cal_avail_ : testing_cal_avail_;
         if(cal_avail)
@@ -56,17 +56,81 @@ namespace kitti{
             else
                 filePath = testing_cal_path_+"/calib_cam_to_cam/"+sss.str()+".txt";
 
-            cam2cam_file_reader(filePath);
+            cam2camCalibrationParams returnParams;
+            cam2cam_file_reader(filePath, returnParams);
         }
         else
         {
             throw std::runtime_error("Required calibration file unavailable");
         }
-
     }
 
 
-    void FlowCalibrationReader::cam2cam_file_reader(const std::string& calFile)
+    cv::Size FlowCalibrationReader::sizeParser(std::string& size_values)
+    {
+		std::vector<std::string> values = split(size_values, ' ');
+		cv::Size ret(stringToNumber<int>(values[0]), stringToNumber<int>(values[1]));
+		return ret;
+    }
+
+    cv::Mat FlowCalibrationReader::KParser(std::string& K_values)
+    {
+		std::vector<std::string> values = split(K_values, ' ');
+		cv::Mat ret(3,3,CV_64F);
+
+		uint8_t counter = 0;
+		for (uint8_t i = 0; i < 3; ++i)
+			for (uint8_t j = 0; j < 3; ++j)
+			{
+				ret.at<double>(i,j) = stringToNumber<double>(values[counter]);
+				counter++;
+			}
+
+		return ret;
+    }
+
+    cv::Mat FlowCalibrationReader::DParser(std::string& D_values)
+    {
+		std::vector<std::string> values = split(D_values, ' ');
+		cv::Mat ret(1,5,CV_64F);
+
+		uint8_t counter = 0;
+		for (uint8_t j = 0; j < 5; ++j)
+		{
+			ret.at<double>(1,j) = std::atof(values[counter].c_str());
+			counter++;
+		}
+
+		return ret;
+    }
+
+    void FlowCalibrationReader::RParser(std::string& R_values, cv::Mat& P_mat)
+    {
+		std::vector<std::string> values = split(R_values, ' ');
+
+		uint8_t counter = 0;
+		for (uint8_t i = 0; i < 3; ++i)
+			for (uint8_t j = 0; j < 3; ++j)
+			{
+				P_mat.at<double>(i,j) = stringToNumber<double>(values[counter]);
+				counter++;
+			}
+    }
+
+    void FlowCalibrationReader::TParser(std::string& T_values, cv::Mat& P_mat)
+    {
+		std::vector<std::string> values = split(T_values, ' ');
+
+		uint8_t counter = 0;
+		for (uint8_t j = 0; j < 3; ++j)
+		{
+			P_mat.at<double>(j,3) = stringToNumber<double>(values[counter]);
+			counter++;
+		}
+    }
+
+
+    void FlowCalibrationReader::cam2cam_file_reader(const std::string& calFile, cam2camCalibrationParams& params)
     {
     	std::ifstream fs(calFile);
 
@@ -77,11 +141,45 @@ namespace kitti{
     	else
     	{
     		std::string line;
+    		int lineNo = 0;
 			while (std::getline(fs, line))
 			{
-    			std::cout << line << std::endl;
-			}
+				std::vector<std::string> label_values = split(line,':');
+				std::vector<std::string> labels = split(label_values[0], '_');
 
+				if(labels.size()<=1)
+				{
+					std::runtime_error("Error Reading Calibration File: " + calFile);
+				}
+				else if(labels.size()==2)
+				{
+					int camIndex = (stringToNumber<int>(labels[1]) < 3) ? stringToNumber<int>(labels[1]): 
+							throw std::runtime_error("Error reading calibration file: " + calFile);
+					if(labels[0] == "S")
+						params.four_cameras_params[camIndex].S = sizeParser(label_values[1]);
+					else if(labels[0] == "K")
+						params.four_cameras_params[camIndex].K = KParser(label_values[1]);
+					else if(labels[0] == "D")
+						params.four_cameras_params[camIndex].D = DParser(label_values[1]);
+					else if(labels[0] == "R")
+						RParser(label_values[1], params.four_cameras_params[camIndex].P);
+					else if(labels[0] == "T")
+						TParser(label_values[1], params.four_cameras_params[camIndex].P);
+					else if (labels[0] == "calib" || labels[0] == "corner")
+						;
+					else
+					{
+						std::stringstream ss;
+						ss << "Invalid calibration file: " << calFile << ", at line: " << lineNo;
+						throw std::runtime_error(ss.str());
+					}
+				}
+				else if(labels.size()==3)
+				{
+					;
+				}
+				lineNo++;
+			}
     	}
   	}
 

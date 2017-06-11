@@ -7,7 +7,11 @@ int main(int argc, char** argv)
 
 	try
 	{
-		reader.get_cam2cam_calibration(0);
+		perception::kitti::cam2camCalibrationParams params = reader.get_cam2cam_calibration(0);
+		std::cout << "S_00: " << std::endl << params.four_cameras_params[0].getSize() << std::endl;
+		std::cout << "K_00: " << std::endl << params.four_cameras_params[0].getK() << std::endl;
+		std::cout << "D_00: " << std::endl << params.four_cameras_params[0].getD() << std::endl;
+		std::cout << "P_00: " << std::endl << params.four_cameras_params[0].getP() << std::endl;
 	}
 	catch(std::exception& e)
 	{

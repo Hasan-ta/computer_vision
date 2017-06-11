@@ -1,5 +1,8 @@
 #include <string>
 #include <vector>
+#include <sstream>
+
+#define DEBUG
 
 namespace perception{
 namespace kitti{
@@ -12,6 +15,9 @@ namespace kitti{
             if ( isdigit(*i) || *i=='e' || *i=='-' || *i=='+' || *i=='.' )
                 ss << *i;
         T result;
+				#ifdef DEBUG
+					std::string ss_string(ss.str());
+				#endif
         return ss >> result ? result : defValue;
     }
 
