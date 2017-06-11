@@ -14,6 +14,8 @@
 #include "common.h"
 #include <map>
 #include <sstream>
+#include "kitti_flow_calibration_reader.h"
+#include "utils/calibration/CamParams.hpp"
 
 namespace perception{
 namespace kitti{
@@ -35,8 +37,10 @@ namespace kitti{
         calibration_path(calib_path)
         {
             set_data_path(parent_directory);
-            set_calibration_path(calibration_path);
+            cal_readr.set_calibration_folder(calibration_path);
         }
+
+        virtual ~KittiFlowStereoIO2015(){}
 
         void set_data_path(std::string path)
         {
@@ -211,7 +215,22 @@ namespace kitti{
 
         bool get_current_frame_cam2cam_calibration(bool left = true, bool train = true)
         {
+            cam2camCalibrationParams params;
+            get_specific_frame_cam2cam_calibration(current_position, left, train, params)
+            return true;
+        }
 
+        bool get_specific_frame_cam2cam_calibration(int frame_no, bool left = true, bool train = true, cam2camCalibrationParams& params)
+        {
+            cal_reader.get_cam2cam_calibration(frame_no, params, train);
+            current_cam_params = perception::utils::CamParams(params.ExtMat, params.K, params.D, params.S_rect)
+            current_cam_params.setProjectionMatrix(params.P_rect);
+            return true;
+        }
+
+        void get_current_frame_P_rect(bool left = true, bool train = true)
+        {
+            get_specific_frame_P_rect(current_position, left, train);
         }
 
         int get_current_position()
@@ -224,8 +243,6 @@ namespace kitti{
             current_position = num;
         }
 
-        ~KittiFlowStereoIO2015(){}
-
     private:
         std::string parent_directory;    
         std::string training_path;
@@ -237,6 +254,9 @@ namespace kitti{
 
         int current_position = 0;
         std::vector<std::string> raw_sequence;
+
+        FlowCalibrationReader cal_reader;
+        perception::utils::CamParams current_cam_params;
 
     };
 

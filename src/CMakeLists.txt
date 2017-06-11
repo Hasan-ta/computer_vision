@@ -1,2 +1,3 @@
+set (SRC_PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(kitti_tools/custom_tools)
 add_subdirectory(odometry/monocular)

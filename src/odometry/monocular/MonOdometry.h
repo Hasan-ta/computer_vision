@@ -17,55 +17,58 @@
 namespace perception{
 namespace odometry{
 
-	class MonOdometry{
-	public:
-		MonOdometry();
+class MonOdometry{
+public:
+	MonOdometry();
 
-		/**
-		 * @brief      Sets the frames.
-		 *
-		 * @param[in]  f1    The f 1
-		 * @param[in]  f2    The f 2
-		 */
-		void setFrames(cv::Mat f1, cv::Mat f2);
-
-
-		/**
-		 * @brief      Sets the minimum corner distance.
-		 *
-		 * @param[in]  distance  The distance
-		 */
-		void setMinCornerDistance(const int& distance);
-
-		/**
-		 * @brief      Calculates the motion.
-		 */
-		void calculateMotion();
+	/**
+	 * @brief      Sets the frames.
+	 *
+	 * @param[in]  f1    The f 1
+	 * @param[in]  f2    The f 2
+	 */
+	void setFrames(cv::Mat f1, cv::Mat f2);
 
 
-	private:
-		cv::Mat frame1_, frame2_;
-		bool new_frames_ = false;		
+	/**
+	 * @brief      Sets the minimum corner distance.
+	 *
+	 * @param[in]  distance  The distance
+	 */
+	void setMinCornerDistance(const int& distance);
 
-		// Feature Detector Params
-		cv::vector<cv::Point2f> corners_;
-		int max_corners_, min_corner_distance_, detector_block_size_;
-		cv::Mat detector_roi_;
-		bool use_harris_;
-		float corners_quality_;
-		std::vector<cv::Point2f> tracked_features_;
-
-
-		/**
-		 * @brief      { function_description }
-		 */
-		virtual void extractFeatures();
+	/**
+	 * @brief      Calculates the motion.
+	 */
+	void calculateMotion();
 
 
-		virtual void trackFeatures();
+private:
+	cv::Mat frame1_, frame2_;
+	bool new_frames_ = false;		
+
+	// Feature Detector Params
+	cv::vector<cv::Point2f> corners_;
+	int max_corners_, min_corner_distance_, detector_block_size_;
+	cv::Mat detector_roi_;
+	bool use_harris_;
+	float corners_quality_;
+	std::vector<cv::Point2f> tracked_features_;
 
 
-	};
+protected:
+	/**
+	 * @brief      { function_description }
+	 */
+	virtual void extractFeatures();
+
+
+	virtual void trackFeatures();
+
+
+};
+
+
 }
 }
 

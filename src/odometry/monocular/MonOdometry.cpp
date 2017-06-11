@@ -31,7 +31,6 @@ void draw_flow_arrows(const cv::Mat& gray, const cv::Vector<cv::Point2f>& pts1, 
 	cv::waitKey(0);
 }
 
-
 #endif
 
 namespace perception{

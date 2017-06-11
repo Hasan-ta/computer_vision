@@ -60,7 +60,7 @@ namespace kitti{
         }
         else
         {
-            throw std::runtime_error("Required calibration file unavailable");
+            throw std::runtime_error("Required calibration file unavailable or calibration folder path was not set");
         }
     }
 
@@ -97,7 +97,7 @@ namespace kitti{
 		}
     }
 
-    void FlowCalibrationReader::RParser(std::string& R_values, cv::Mat& P_mat)
+    void FlowCalibrationReader::RParser(std::string& R_values, cv::Mat& ExtMat)
     {
 		std::vector<std::string> values = split(R_values, ' ');
 
@@ -105,19 +105,19 @@ namespace kitti{
 		for (uint8_t i = 0; i < 3; ++i)
 			for (uint8_t j = 0; j < 3; ++j)
 			{
-				P_mat.at<double>(i,j) = stringToNumber<double>(values[counter]);
+				ExtMat.at<double>(i,j) = stringToNumber<double>(values[counter]);
 				counter++;
 			}
     }
 
-    void FlowCalibrationReader::TParser(std::string& T_values, cv::Mat& P_mat)
+    void FlowCalibrationReader::TParser(std::string& T_values, cv::Mat& ExtMat)
     {
 		std::vector<std::string> values = split(T_values, ' ');
 
 		uint8_t counter = 1;
 		for (uint8_t j = 0; j < 3; ++j)
 		{
-			P_mat.at<double>(j,3) = stringToNumber<double>(values[counter]);
+			ExtMat.at<double>(j,3) = stringToNumber<double>(values[counter]);
 			counter++;
 		}
     }
@@ -207,16 +207,16 @@ namespace kitti{
 								}
 								else
 								{
-									RParser(label_values[1], temp.P);
-									params.setP(camIndex,temp.P);
+									RParser(label_values[1], temp.ExtMat);
+									params.setExtMat(camIndex,temp.ExtMat);
 
 								}
 							}
 
 							else if(labels[0] == "T")
 							{
-								TParser(label_values[1], temp.P);
-								params.setP(camIndex,temp.P);
+								TParser(label_values[1], temp.ExtMat);
+								params.setExtMat(camIndex,temp.ExtMat);
 							}
 
 							else if(labels[0] == "P")
