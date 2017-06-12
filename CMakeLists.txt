@@ -21,6 +21,8 @@ find_package( OpenCV REQUIRED )
 find_package( Boost COMPONENTS system filesystem REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+set (PARENT_SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+
 set (KITTI_TOOLS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/src/kitti_tools )
 
 add_subdirectory(src)

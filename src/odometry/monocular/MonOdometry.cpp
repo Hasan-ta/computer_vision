@@ -51,6 +51,11 @@ namespace odometry{
 		new_frames_ = true;
 	}
 
+	void MonOdometry::setCameraMatrix(const cv::Mat& cameraMatrix)
+	{
+		cameraMatrix_ = cameraMatrix.clone();
+	}
+
 	void MonOdometry::setMinCornerDistance(const int& dist)
 	{
 		min_corner_distance_ = dist;
@@ -94,6 +99,15 @@ namespace odometry{
  		}
 	}
 
+	cv::Mat findEssentialMatrix(const cv::Mat& f, const cv::Mat& cameraMatrix)
+	{
+		cv::Mat retMat;
+		cv::Mat cameraMatrixTranspose = cv::transpose(cameraMatrix, cameraMatrixTranspose);
+		retMat = cameraMatrixTranspose * F * cameraMatrix;
+
+		return retMat.clone();
+	}
+
 	void MonOdometry::calculateMotion()
 	{
 		if(!new_frames_)
@@ -131,6 +145,11 @@ namespace odometry{
      		#endif
 
      		// Estimating Fundamental Matrix
+     		fundamentalMatrix_ = findFundamentalMat(corners_, tracked_features_);
+
+
+     		// Estimating Essential Matrix
+     		essentialMatrix_ = findEssentialMatrix(fundamentalMatrix_, cameraMatrix_);
 		}
 
 	}

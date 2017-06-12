@@ -19,15 +19,23 @@ namespace odometry{
 
 class MonOdometry{
 public:
+
+	/**
+	 * @brief      { function_description }
+	 */
 	MonOdometry();
+
 
 	/**
 	 * @brief      Sets the frames.
 	 *
-	 * @param[in]  f1    The f 1
+	 * @param[in]  f1    T(const cv::Mat& cameraMatrix);he f 1
 	 * @param[in]  f2    The f 2
 	 */
 	void setFrames(cv::Mat f1, cv::Mat f2);
+
+
+	void setCameraMatrix(const cv::Mat& cameraMatrix);
 
 
 	/**
@@ -36,6 +44,7 @@ public:
 	 * @param[in]  distance  The distance
 	 */
 	void setMinCornerDistance(const int& distance);
+
 
 	/**
 	 * @brief      Calculates the motion.
@@ -55,15 +64,34 @@ private:
 	float corners_quality_;
 	std::vector<cv::Point2f> tracked_features_;
 
+	cv::Mat cameraMatrix_;
+	cv::Mat fundamentalMatrix_;
+	cv::Mat essentialMatrix_;
+
 
 protected:
+
 	/**
 	 * @brief      { function_description }
 	 */
 	virtual void extractFeatures();
 
 
+	/**
+	 * @brief      { function_description }
+	 */
 	virtual void trackFeatures();
+
+
+	/**
+	 * @brief      { function_description }
+	 *
+	 * @param[in]  f          { parameter_description }
+	 * @param      <unnamed>  { parameter_description }
+	 *
+	 * @return     { description_of_the_return_value }
+	 */
+	virtual cv::Mat findEssentialMatrix(const cv::Mat& f, const cv::Mat& cameraMatrix);
 
 
 };

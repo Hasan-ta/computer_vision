@@ -6,7 +6,7 @@
 #include <string>
 #include <boost/filesystem.hpp>
 #include <opencv2/core/core.hpp>
-#include "common.h"
+#include "kitti_tools/custom_tools/common.h"
 #include <vector>
 
 
@@ -59,8 +59,11 @@ typedef struct FlowCamCalibParams{
 }FlowCamCalibParams;
 
 
-typedef struct cam2camFlowCalibrationParams{
+typedef struct cam2camFlowCalibrationParams
+{
 	std::vector<FlowCamCalibParams> four_cameras_params = std::vector<FlowCamCalibParams>(4,FlowCamCalibParams());
+	
+
 	void setSize(int camNo, const cv::Size S){four_cameras_params[camNo].S = S;}
 	void setSize_rect(int camNo, const cv::Size S_rect){four_cameras_params[camNo].S_rect = S_rect;}
 	void setK(int camNo, const cv::Mat& K){four_cameras_params[camNo].K = K.clone();}

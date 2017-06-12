@@ -1,4 +1,5 @@
-#include "custom_tools/flow_stereo_io.h"
+#include "kitti_tools/custom_tools/flow_reader/flow_stereo_io.h"
+#include "kitti_tools/custom_tools/flow_reader/kitti_flow_calibration_reader.h"
 #include "MonOdometry.h"
 #include <opencv2/core/core.hpp>
 
@@ -12,7 +13,13 @@ int main(int argc, char** argv)
 
 	while(flow_reader.get_next_mono_frames(f1,f2))
 	{
+		perception::kitti::FlowCamCalibParams left_cam_params;
+		flow_reader.get_current_frame_cam2cam_calibration(left_cam_params);
+
 		odometer.setFrames(f1,f2);
+		cv::Mat K;
+		left_cam_params.getK(K);
+		odometer.setCameraMatrix(K);
 		odometer.calculateMotion();
 	}
 
