@@ -6,7 +6,8 @@
 
 int main(int argc, char** argv)
 {
-	perception::kitti::KittiFlowStereoIO2015 flow_reader("/home/hasan/Desktop/computer_vision/data/kitti/flow_stereo/data_scene_flow");
+	perception::kitti::KittiFlowStereoIO2015 flow_reader("/home/hasan/Desktop/computer_vision/data/kitti/flow_stereo/data_scene_flow",
+			"/home/hasan/Desktop/computer_vision/data/kitti/flow_stereo/calibration");
 	perception::odometry::MonOdometry odometer;
 
 	cv::Mat f1, f2;

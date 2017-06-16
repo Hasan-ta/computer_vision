@@ -11,6 +11,7 @@
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <vector>
+#include <math.h>
 
 
 
@@ -60,6 +61,7 @@ private:
 	cv::vector<cv::Point2f> corners_;
 	int max_corners_, min_corner_distance_, detector_block_size_;
 	cv::Mat detector_roi_;
+	cv::Mat gray_f1_, gray_f2_;
 	bool use_harris_;
 	float corners_quality_;
 	std::vector<cv::Point2f> tracked_features_;
@@ -92,6 +94,9 @@ protected:
 	 * @return     { description_of_the_return_value }
 	 */
 	virtual cv::Mat findEssentialMatrix(const cv::Mat& f, const cv::Mat& cameraMatrix);
+
+
+	virtual void recoverPose(const cv::Mat& e, cv::Mat& R, cv::Mat& t);
 
 
 };

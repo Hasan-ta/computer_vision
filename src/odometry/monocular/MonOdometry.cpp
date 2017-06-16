@@ -2,6 +2,46 @@
 
 #define DEBUG
 
+
+cv::Mat rot2euler(const cv::Mat & rotationMatrix)
+{
+  cv::Mat euler(3,1,CV_64F);
+
+  double m00 = rotationMatrix.at<double>(0,0);
+  double m02 = rotationMatrix.at<double>(0,2);
+  double m10 = rotationMatrix.at<double>(1,0);
+  double m11 = rotationMatrix.at<double>(1,1);
+  double m12 = rotationMatrix.at<double>(1,2);
+  double m20 = rotationMatrix.at<double>(2,0);
+  double m22 = rotationMatrix.at<double>(2,2);
+
+  double x, y, z;
+
+  // Assuming the angles are in radians.
+  if (m10 > 0.998) { // singularity at north pole
+    x = 0;
+    y = CV_PI/2;
+    z = atan2(m02,m22);
+  }
+  else if (m10 < -0.998) { // singularity at south pole
+    x = 0;
+    y = -CV_PI/2;
+    z = atan2(m02,m22);
+  }
+  else
+  {
+    x = atan2(-m12,m11);
+    y = asin(m10);
+    z = atan2(-m20,m00);
+  }
+
+  euler.at<double>(0) = x;
+  euler.at<double>(1) = y;
+  euler.at<double>(2) = z;
+
+  return euler;
+}
+
 #ifdef DEBUG
 
 void draw_features_on_image(const cv::Mat& gray, const cv::Vector<cv::Point2f>& corners_)
@@ -66,7 +106,7 @@ namespace odometry{
 		detector_roi_ = cv::Mat(cv::Size(0,0), CV_8UC1);
 		corners_.clear();
 		setMinCornerDistance(20);
-		cv::goodFeaturesToTrack(gray_f1, corners_, max_corners_, corners_quality_,
+		cv::goodFeaturesToTrack(gray_f1_, corners_, max_corners_, corners_quality_,
 			min_corner_distance_, detector_roi_,
 			detector_block_size_, use_harris_);
 	}
@@ -79,7 +119,7 @@ namespace odometry{
 		cv::Size winSize=cv::Size(21,21);																								
 		cv::TermCriteria termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01);
 
-		cv::calcOpticalFlowPyrLK(gray_f1, gray_f2, corners_, tracked_features_, status, err, winSize, 3, termcrit, 0, 0.001);
+		cv::calcOpticalFlowPyrLK(gray_f1_, gray_f2_, corners_, tracked_features_, status, err, winSize, 3, termcrit, 0, 0.001);
 
 		int indexCorrection = 0;
 	  	for( int i=0; i<status.size(); i++)
@@ -99,13 +139,48 @@ namespace odometry{
  		}
 	}
 
-	cv::Mat findEssentialMatrix(const cv::Mat& f, const cv::Mat& cameraMatrix)
+	cv::Mat MonOdometry::findEssentialMatrix(const cv::Mat& f, const cv::Mat& cameraMatrix)
 	{
 		cv::Mat retMat;
-		cv::Mat cameraMatrixTranspose = cv::transpose(cameraMatrix, cameraMatrixTranspose);
-		retMat = cameraMatrixTranspose * F * cameraMatrix;
+		cv::Mat cameraMatrixTranspose;
+		cv::transpose(cameraMatrix, cameraMatrixTranspose);
+		retMat = cameraMatrixTranspose * f * cameraMatrix;
 
 		return retMat.clone();
+	}
+
+	void MonOdometry::recoverPose(const cv::Mat& e, cv::Mat& R, cv::Mat& t)
+	{
+		cv::SVD essentialSVD;
+		essentialSVD = essentialSVD(e);
+
+		std::cerr << std::endl << "u: " << std::endl << essentialSVD.u << std::endl;
+		std::cerr << std::endl << "w: " << std::endl << essentialSVD.w << std::endl; 
+		std::cerr << std::endl << "vt: " << std::endl << essentialSVD.vt << std::endl;
+
+		cv::Mat W = cv::Mat::zeros(3,3,CV_64F);
+		W.at<double>(0,0) = essentialSVD.w.at<double>(0);
+		W.at<double>(1,1) = essentialSVD.w.at<double>(1);
+		W.at<double>(2,2) = essentialSVD.w.at<double>(2);
+
+		std::cerr << std::endl << "W: " << std::endl << W << std::endl;
+
+		R = essentialSVD.u*W*essentialSVD.vt;
+
+		std::cerr << std::endl << "R: " << std::endl << R << std::endl;
+
+	    float sy = sqrt(R.at<double>(0,0) * R.at<double>(0,0) +  R.at<double>(1,0) * R.at<double>(1,0) );
+
+        bool singular = sy < 1e-6; // If
+
+        const int RAD2DEG = 180/M_PI;// TODO: Replace by a macro in global header
+        
+        float r,p,y;
+	    cv::Mat measured_eulers(3, 1, CV_64F);
+	    measured_eulers = rot2euler(R);
+	    r = measured_eulers.at<double>(0,0); p = measured_eulers.at<double>(1,0); y = measured_eulers.at<double>(2,0);
+	    std::cerr << "roll: " << r*RAD2DEG << ", pitch: " << p*RAD2DEG << ", yaw: " << y*RAD2DEG << std::endl;
+
 	}
 
 	void MonOdometry::calculateMotion()
@@ -123,33 +198,38 @@ namespace odometry{
 			*/
 
 			// Detect Feature
-			cv::Mat gray_f1, gray_f2;
-			cv::cvtColor(frame1_, gray_f1, CV_BGR2GRAY);
-			cv::cvtColor(frame1_, gray_f2, CV_BGR2GRAY);
+			cv::cvtColor(frame1_, gray_f1_, CV_BGR2GRAY);
+			cv::cvtColor(frame1_, gray_f2_, CV_BGR2GRAY);
 
 			extractFeatures();
 
 			#ifdef DEBUG
 				std::cerr << "roi size: " << detector_roi_.size() << std::endl;
 				std::cerr << "Number of Corners Detected: " << corners_.size() << std::endl;
-				draw_features_on_image(gray_f1, corners_);
+				draw_features_on_image(gray_f1_, corners_);
 			#endif
 
 
 			// Calculate Optical Flow
-			trackFeatures()
+			trackFeatures();
 
      		#ifdef DEBUG
      			std::cerr << "Tracked " << corners_.size() << " features." << std::endl;
-     			draw_flow_arrows(gray_f1, corners_ , tracked_features_);
+     			draw_flow_arrows(gray_f1_, corners_ , tracked_features_);
      		#endif
 
      		// Estimating Fundamental Matrix
      		fundamentalMatrix_ = findFundamentalMat(corners_, tracked_features_);
 
-
      		// Estimating Essential Matrix
      		essentialMatrix_ = findEssentialMatrix(fundamentalMatrix_, cameraMatrix_);
+
+     		#ifdef DEBUG
+     			std::cerr << std::endl << "essential matrix: " << std::endl << essentialMatrix_ << std::endl;
+     		#endif
+
+     		cv::Mat R, t;
+     		recoverPose(essentialMatrix_, R, t);
 		}
 
 	}

@@ -1,5 +1,4 @@
 #include "kitti_flow_calibration_reader.h"
-#include "custom_exceptions.h"
 #include <sstream>
 
 
@@ -32,7 +31,7 @@ namespace kitti{
             }
         }
         if(!current_cal_path_valid_)
-            throw invalid_path;
+            throw std::runtime_error("Invalid Kitti Flow Data Path");
         if(!testing_cal_avail_)
             std::cerr << "WARNING: Path only contains training calibration data. Test calibration data won't be read\n";
     }
