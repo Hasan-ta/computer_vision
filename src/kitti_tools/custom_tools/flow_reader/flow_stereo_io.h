@@ -5,7 +5,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 #include <string>
-#include <dirent.h>
 #include <exception>
 #include <boost/filesystem.hpp>
 //#include "custom_exceptions.h"
