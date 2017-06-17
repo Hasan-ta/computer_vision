@@ -4,37 +4,84 @@ namespace perception{
 namespace kitti{
 
 
-KittiOdometryIO::KittiOdometryIO(const std::string&& path) : parentDirectory_(path)
+KittiOdometrIO::KiitiOdometryIO() :
+	currentPathValid(false),
+	endOfCurrentSequence(false),
+	currentSequence(0),
+	currentFrame(0)
+	{}
+
+KittiOdometryIO::KittiOdometryIO(const std::string&& path) : 
+	parentDirectory_(path),
+	currentPathValid(false),
+	endOfCurrentSequence(false),
+	currentSequence(0),
+	currentFrame(0)
 {
 	setDataPath(parentDirectory_);
 }
 
 KittiOdometryIO::setDataPath(const std::string& path)
 {
-
-{
 	using namespace boost::filesystem;
 
-	for (directory_iterator itr(parent_directory); itr!=directory_iterator(); ++itr)
+	for (directory_iterator itr(parentDirectory); itr!=directory_iterator(); ++itr)
 	{
 	    if(itr->path().filename() == "sequences" && is_directory(*itr))
 	    {
-	        training_avail = true; current_path_valid = true;
-	        training_path = parent_directory + "/training";
-	        list_raw_sequences();
+	        currentPathValid = true;
 	    }
-	    if(itr->path().filename() == "testing" && is_directory(*itr))
-	    {
-	        testing_avail = true;
-	        testing_path = parent_directory + "/testing";
-	    }
+	    // TODO: Add another level of checking path validity.
 	}
 	if(!current_path_valid)
 	    throw std::runtime_error("Invalid Kitti Flow Data Path");
-	if(!testing_avail)
-	    std::cerr << "WARNING: Path only contains training data. Test data won't be read\n";
-
+	else
+	{
+		listAvailableSequences(parentDirectory_+"/sequences");
+	}
 }
+
+KittiOdometryIO::listAvailableSequences(std::string datasetPath)
+{
+	using namespace boost::filesystem;
+
+    for (directory_iterator itr(datasetPath); itr!=directory_iterator(); ++itr)
+    {
+        std::string temp(itr->path().filename().string());
+        availableSequences.push_back(temp);
+    }
+
+    sort(availableSequences.begin(),availableSequences.end());
+}
+
+KittiOdometryIO::listAvailableFrames(std::string sequencePath)
+{
+	using namespace boost::filesystem;
+
+    for (directory_iterator itr(sequencePath); itr!=directory_iterator(); ++itr)
+    {
+        std::string temp(itr->path().filename().string());
+        availableSequences.push_back(temp);
+    }
+
+    sort(availableFrames.begin(),availableFrames.end());
+}
+
+KittiOdometryIO::getNextFrame(cv::Mat& left, cv::Mat& Right, sequenceJumping = false)
+{
+	if(currentSequence != availableSequences.size())
+	{
+		if(currentFrame != availableFrames.size())
+		{
+			currentFrame++;
+			cv::imread(cv::set)
+		}
+		endOfCurrentSequence
+		currentSequence++;
+	}
+}
+
+Kitti
 
 }
 }
