@@ -9,6 +9,7 @@
 #include <boost/filesystem.hpp>
 #include <vector>
 #include <string>
+#include <sstream>
 
 
 namespace perception{
@@ -31,6 +32,10 @@ public:
 
 	void getNextFrame(cv::Mat& left, cv::Mat& right, bool sequenceJumping = false);
 
+
+	void seek(const int& sequenceNumber, const int& frameNumber);
+
+
 	bool endOfSequence();
 
 private:
@@ -48,10 +53,6 @@ private:
 	void listAvailableSequences(const std::string& datasetPath);
 
 	void listAvailableFrames(const std::string& sequencePath);
-
-	// std::string constructImageName(const int& frameNo);
-
-	// std::string constructSequenceName(const int& sequenceNo);
 
 };
 

@@ -72,38 +72,6 @@ void KittiOdometryIO::listAvailableFrames(const std::string& sequencePath)
     sort(availableFrames_.begin(),availableFrames_.end());
 }
 
-// inline std::string KittiOdometryIO::constructImageName(const int& frameNo)
-// {
-//     std::stringstream ss;
-//     std::stringstream sss;
-//     ss << frameNo;
-//     if(ss.str().size() == 1)
-//         sss << "00000" << frameNo;
-//     else if (ss.str().size() == 2)
-//         sss << "0000" << frameNo;
-//     else if(ss.str().size() == 3)
-//         sss << "00" << frameNo;
-//     else if(ss.str().size() == 4)
-//     	sss << "0" << frameNo;
-//     else sss << frameNo;
-
-//     return sss.str() + ".png";
-// }
-
-// inline std::string KittiOdometryIO::constructSequenceName(const int& sequenceNo)
-// {
-// 	std::stringstream ss;
-//     std::stringstream sss;
-//     ss << sequenceNo;
-//     if(ss.str().size() == 1)
-//         sss << "0" << sequenceNo;
-//     else 
-//     	sss << sequenceNo;
-
-//     return sss.str();
-
-// }
-
 void KittiOdometryIO::getNextFrame(cv::Mat& left, cv::Mat& right, bool sequenceJumping)
 {
 	std::cerr << "currentFrame: " << currentFrame_ << std::endl;
@@ -138,6 +106,48 @@ void KittiOdometryIO::getNextFrame(cv::Mat& left, cv::Mat& right, bool sequenceJ
 			if(currentSequence_ == availableSequences_.size()-1)
 				throw std::runtime_error("End of dataset or sequence jumping is disabled");
 		}
+
+	}
+}
+
+void KittiOdometryIO::seek(const int& sequenceNumber, const int& frameNumber)
+{
+	std::stringstream s;
+	if(sequenceNumber < 9)
+		s << "0" << sequenceNumber;
+	else
+		s << sequenceNumber;
+	std::string sequenceName = s.str();
+	std::vector<std::string>::iterator it = std::find(availableSequences_.begin(), availableSequences_.end(), sequenceName);
+	if( it == availableSequences_.end())
+		throw std::runtime_error("KittiOdometryIO::seek(): Sequence number unavailable");
+	else
+	{
+		currentSequence_ = it - availableSequences_.begin();
+		std::string currentSequencePath = parentDirectory_ + "/sequences/" + availableSequences_[currentSequence_] + 
+													"/image_0/";
+		listAvailableFrames(currentSequencePath);
+
+		std::stringstream ss;
+		if(frameNumber < 9)
+			ss << "00000" << frameNumber << ".png";
+		else if(frameNumber < 99)
+			ss << "0000" << frameNumber << ".png";
+		else if(frameNumber < 999)
+			ss << "000" << frameNumber << ".png";
+		else if(frameNumber < 9999)
+			ss << "00" << frameNumber << ".png";
+		else if(frameNumber < 99999)
+			ss << "0" << frameNumber << ".png";
+		else
+			ss << frameNumber << ".png";
+
+		std::string frameName = ss.str();		
+		it = std::find(availableFrames_.begin(), availableFrames_.end(), frameName);
+		if( it == availableFrames_.end())
+			throw std::runtime_error("KittiOdometryIO::seek(): Frame number unavailable");
+		else
+			currentFrame_ = it - availableFrames_.begin();
 
 	}
 }

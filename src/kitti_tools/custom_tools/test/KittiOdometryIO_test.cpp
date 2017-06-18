@@ -7,7 +7,8 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		perception::kitti::KittiOdometryIO odometryReader("/home/hasan/Desktop/computer_vision/data/kitti/odometry/aaa");
+		perception::kitti::KittiOdometryIO odometryReader("/home/hasan/Desktop/computer_vision/data/kitti/odometry/dataset/");
+		odometryReader.seek(2,1000);
 		while(1)
 		{
 			cv::Mat left, right;
@@ -15,8 +16,10 @@ int main(int argc, char** argv)
 			
 			cv::imshow("left", left);
 			cv::waitKey(1);
-			usleep(10);
+			usleep(100*1000);
 		}
+
+
 	}
 	catch(std::exception& e)
 	{
