@@ -157,5 +157,38 @@ bool KittiOdometryIO::endOfSequence()
 	return endOfCurrentSequence_;
 }
 
+void KittiOdometryIO::getCalibration(cv::Mat& P0, cv::Mat& P1)
+{
+	std::string calFile(parentDirectory_+"/sequences/"+availableSequences_[currentSequence_]+
+						"/calib.txt");
+	std::ifstream fs(calFile);
+
+	if(!fs)
+	{
+		throw std::runtime_error("KittiOdometryIO::getCalibration(): Couldn't open calibration file: " + calFile);
+	}
+	else
+	{
+		std::string line;
+		int lineNo = 0;
+		while (std::getline(fs, line))
+		{
+			std::vector<std::string> labelValues = split(line, ':');
+			if(labelValues[0] == "P0")
+			{
+				std::vector<std::string> PValues = split(labelValues[1], ' ');
+				P0 = cv::Mat::zeros(3, 4, CV_64F);
+				for (int i = 0; i < 12; ++i) P0.at<double>(i) = stringToNumber<double>(PValues[i+1]);
+			}
+			else if (labelValues[0] == "P1")
+			{
+				std::vector<std::string> PValues = split(labelValues[1], ' ');
+				P1 = cv::Mat::zeros(3, 4, CV_64F);
+				for (int i = 0; i < 12; ++i) P1.at<double>(i) = stringToNumber<double>(PValues[i+1]);
+			}
+		}
+	}
+}
+
 }
 }

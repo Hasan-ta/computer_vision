@@ -10,6 +10,9 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <fstream>
+
+#include "kitti_tools/custom_tools/libs/common.h"
 
 
 namespace perception{
@@ -37,6 +40,9 @@ public:
 
 
 	bool endOfSequence();
+
+
+	void getCalibration(cv::Mat& P0, cv::Mat& P1);
 
 private:
 
