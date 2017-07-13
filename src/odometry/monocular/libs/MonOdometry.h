@@ -14,18 +14,21 @@
 #include <math.h>
 
 
-
 namespace perception{
 namespace odometry{
 
+
+
+/**
+ * @brief      Class for monocular pose estimation
+ */
 class MonOdometry{
 public:
 
 	/**
-	 * @brief      { function_description }
+	 * @brief      Simple Constructor
 	 */
 	MonOdometry();
-
 
 	/**
 	 * @brief      Sets the frames.
@@ -35,9 +38,12 @@ public:
 	 */
 	void setFrames(cv::Mat f1, cv::Mat f2);
 
-
+	/**
+	 * @brief      Sets the camera matrix.
+	 *
+	 * @param[in]  cameraMatrix  The camera matrix
+	 */
 	void setCameraMatrix(const cv::Mat& cameraMatrix);
-
 
 	/**
 	 * @brief      Sets the minimum corner distance.
@@ -54,21 +60,28 @@ public:
 
 
 private:
+	// Two monocular frames
 	cv::Mat frame1_, frame2_;
-	bool new_frames_ = false;		
+	cv::Mat gray_f1_, gray_f2_;
 
 	// Feature Detector Params
 	cv::vector<cv::Point2f> corners_;
 	int max_corners_, min_corner_distance_, detector_block_size_;
 	cv::Mat detector_roi_;
-	cv::Mat gray_f1_, gray_f2_;
 	bool use_harris_;
 	float corners_quality_;
 	std::vector<cv::Point2f> tracked_features_;
 
+	// Camera Params
 	cv::Mat cameraMatrix_;
 	cv::Mat fundamentalMatrix_;
 	cv::Mat essentialMatrix_;
+
+	// Last Position buffer
+	cv::Mat latestPosition_;
+
+	// Flags
+	bool new_frames_ = false;
 
 
 protected:
@@ -86,7 +99,7 @@ protected:
 
 
 	/**
-	 * @brief      { function_description }
+	 * @brief      finds essential matrix given fundamental matrix and camera matrix
 	 *
 	 * @param[in]  f          { parameter_description }
 	 * @param      <unnamed>  { parameter_description }
@@ -96,6 +109,13 @@ protected:
 	virtual cv::Mat findEssentialMatrix(const cv::Mat& f, const cv::Mat& cameraMatrix);
 
 
+	/**
+	 * @brief      Recovers pose given essential matrix
+	 *
+	 * @param[in]  e     { parameter_description }
+	 * @param      R     { parameter_description }
+	 * @param      t     { parameter_description }
+	 */
 	virtual void recoverPose(const cv::Mat& e, cv::Mat& R, cv::Mat& t);
 
 

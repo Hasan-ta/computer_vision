@@ -190,5 +190,44 @@ void KittiOdometryIO::getCalibration(cv::Mat& P0, cv::Mat& P1)
 	}
 }
 
+void KittiOdometryIO::getGroundTruthPose(cv::Mat& gtPose)
+{
+	gtPose = cv::Mat::zeros(3,4,CV_64F);
+	std::stringstream temp;
+	if(currentSequence_<10)
+		temp << "/poses/0" << (int)currentSequence_ << ".txt";
+	else
+		temp << "/poses/" << (int)currentSequence_ << ".txt";
+
+	std::string posePath(parentDirectory_ + temp.str());
+
+	std::ifstream fs(posePath, std::ios::in);
+
+	if(!fs)
+	{
+		throw std::runtime_error("KittiOdometryIO::getGroundTruthPose: Couldn't open calibration file: " + posePath);
+	}
+	else
+	{	
+		fs.seekg(std::ios::beg);
+	    for(int i=0; i < currentFrame_; ++i){
+	        fs.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+	    }
+
+	    std::string poseLine;
+	    std::getline(fs, poseLine);
+
+	    std::vector<std::string> PValues = split(poseLine, ' ');
+
+	    if(PValues.size() < 12)
+	    {
+	    	std::cerr << "Invalide Ground Truth Pose: Defaulting to zeros" << std::endl;
+	    }
+	    for (int i = 0; i < 12; ++i) gtPose.at<double>(i) = stringToNumber<double>(PValues[i]);
+	}
+
+
+}
+
 }
 }
