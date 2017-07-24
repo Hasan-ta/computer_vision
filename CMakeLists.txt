@@ -26,6 +26,7 @@ set (PARENT_SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set (KITTI_TOOLS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/src/kitti_tools )
 
 option(BUILD_CUSTOM_KITTI         "Compile custom kitti tools"        ON)
-option(BUILD_ODOMETRY         		"Compile Odometry executables"      OFF)
+option(BUILD_ODOMETRY         		"Compile Odometry executables"      ON)
+option(BUILD_LOGGER         			"Compile LOGGER"      							ON)
 
 add_subdirectory(src)

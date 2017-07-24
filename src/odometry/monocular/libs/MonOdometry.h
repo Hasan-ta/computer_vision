@@ -30,6 +30,12 @@ public:
 	 */
 	MonOdometry();
 
+
+	/**
+	 * @brief      Destroys the object.
+	 */
+	virtual ~MonOdometry();
+
 	/**
 	 * @brief      Sets the frames.
 	 *
@@ -56,7 +62,7 @@ public:
 	/**
 	 * @brief      Calculates the motion.
 	 */
-	void calculateMotion();
+	void calculateMotion(cv::Mat& R, cv::Mat& t);
 
 
 private:
@@ -74,15 +80,16 @@ private:
 
 	// Camera Params
 	cv::Mat cameraMatrix_;
+
+
 	cv::Mat fundamentalMatrix_;
 	cv::Mat essentialMatrix_;
 
-	// Last Position buffer
-	cv::Mat latestPosition_;
+	cv::Mat R_ = cv::Mat::zeros(3,3,CV_64F);
+	cv::Mat t_ = cv::Mat::zeros(3,1,CV_64F);
 
 	// Flags
 	bool new_frames_ = false;
-
 
 protected:
 
