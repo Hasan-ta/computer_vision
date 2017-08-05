@@ -15,7 +15,7 @@ void visualize_motion(const cv::Mat& newPos, const cv::Mat& p)
 	cv::Mat newPosition(2,1,CV_64F);
 	newPosition = latestPosition - trans/2;
 
-	cv::Mat trans_c= (cv::Mat_<double>(2,1) << p.at<double>(0,3), p.at<double>(2,3));
+	cv::Mat trans_c= (cv::Mat_<double>(2,1) << -p.at<double>(0,3), p.at<double>(2,3));
 	cv::Mat newPosition_c(2,1,CV_64F);
 	newPosition_c = latestPosition - trans_c/2;
 
@@ -24,7 +24,7 @@ void visualize_motion(const cv::Mat& newPos, const cv::Mat& p)
 	circle(newLineImage, cv::Point(newPosition_c.at<double>(0), newPosition_c.at<double>(1)), 2, cv::Scalar(0,0,255), 1);
 	addWeighted(image2, 1.0, newLineImage, 1.0, 0.0, image2);
 	cv::imshow("result2", image2);
-	cv::waitKey(1);
+	cv::waitKey(0);
 
 }
 
@@ -80,15 +80,14 @@ int main(int argc, char** argv)
 			double scale = sqrtf(powf(x-x_prev,2) + powf(y-y_prev,2) + 
 							powf(z-z_prev,2));
 
-			// R = cv::Mat::eye(3,3,CV_64F);
 			if(counter == 0)
 			{
-				t_f = t*scale;
+				t_f = -t*scale;
 				R_f = R;
 			}
 			else
 			{
-				t_f = t_f + scale*(R_f*t);
+				t_f = t_f + scale*(R_f*-t);
 				R_f = R*R_f;	
 			}
 

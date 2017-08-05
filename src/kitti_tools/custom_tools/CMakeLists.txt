@@ -3,6 +3,8 @@ include_directories(${Boost_INCLUDE_DIR}
 	${PARENT_SRC_DIR}
 	${EIGEN3_INCLUDE_DIRS})
 
+message (STATUS "hasan: " ${OpenCV_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 link_directories(${Boost_LIBRARY_DIR})
 

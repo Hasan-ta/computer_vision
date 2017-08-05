@@ -1,13 +1,14 @@
 #include "MonOdometry.h"
 
 #define DEBUG
+#define DEBUG_L2
 
 #ifdef DEBUG
 
 #include <iostream>
 #include <fstream>
 
-void draw_features_on_image(const cv::Mat& gray, const cv::Vector<cv::Point2f>& corners_)
+void draw_features_on_image(const cv::Mat& gray, const cv::vector<cv::Point2f>& corners_)
 {
 	cv::Mat circles_image(gray.rows,gray.cols, CV_8UC3, cv::Scalar(0,0,0));
 	for (uint32_t i = 0; i < corners_.size(); ++i)
@@ -21,7 +22,7 @@ void draw_features_on_image(const cv::Mat& gray, const cv::Vector<cv::Point2f>& 
 	cv::waitKey(1);
 }
 
-void draw_flow_arrows(const cv::Mat& gray, const cv::Vector<cv::Point2f>& pts1, const cv::Vector<cv::Point2f>& pts2)
+void draw_flow_arrows(const cv::Mat& gray, const cv::vector<cv::Point2f>& pts1, const cv::vector<cv::Point2f>& pts2)
 {
 	cv::Mat arrows_image(gray.rows,gray.cols, CV_8UC3, cv::Scalar(0,0,0));
 	for (uint32_t i = 0; i < pts1.size(); ++i)
@@ -36,19 +37,29 @@ void draw_flow_arrows(const cv::Mat& gray, const cv::Vector<cv::Point2f>& pts1, 
 
 std::fstream debugFile("./monOdometry_debug.txt", std::ios::out);
 
+// #include "utils/logger/libs/Logger.hpp"
+
 #endif
 
 namespace perception{
 namespace odometry{
 
 	MonOdometry::MonOdometry():
-		max_corners_(500),
-		corners_quality_(0.01),
-		min_corner_distance_(20),
+		max_corners_(1000),
+		corners_quality_(0.001),
+		min_corner_distance_(10),
 		detector_block_size_(3),
 		use_harris_(true)
+		// #ifdef DEBUG 
+		// 	,log("/home/hasan/Desktop/MonOdometry_log.txt")
+		// #endif
 	{
-
+		// #ifdef DEBUG
+		// 	log.addObjectToList("fundamentalMatrix_", &fundamentalMatrix_, log.CV_MAT);
+		// 	log.addObjectToList("essentialMatrix_", &essentialMatrix_, log.CV_MAT);
+		// 	log.addObjectToList("R_", &R_, log.CV_MAT);
+		// 	log.addObjectToList("t_", &t_, log.CV_MAT);
+		// #endif
 	}
 
 	MonOdometry::~MonOdometry()
@@ -108,17 +119,7 @@ namespace odometry{
 	     		corners_.erase (corners_.begin() + i - indexCorrection);
 	     		tracked_features_.erase (tracked_features_.begin() + i - indexCorrection);
 	     		indexCorrection++;
-	     		// continue;
  			}
-
- 			// if(sqrtf(powf(corners_[i].x - tracked_features_[i].x,2) + powf(corners_[i].y - tracked_features_[i].y,2)) > 50)
- 			// {
- 			// 	// std::cout << "distacnce : " << sqrtf(powf(corners_[i].x - tracked_features_[i].x,2) + powf(corners_[i].y - tracked_features_[i].y,2)) << std::endl;
- 			// 	corners_.erase (corners_.begin() + i - indexCorrection);
-	   //   		tracked_features_.erase (tracked_features_.begin() + i - indexCorrection);
-	   //   		indexCorrection++;
- 			// }
-
  		}
 	}
 
@@ -126,15 +127,11 @@ namespace odometry{
 	{
 		cv::Mat retMat;
 		retMat = cameraMatrix.t() * f * cameraMatrix;
-		return retMat.clone();
-	}
 
-	void MonOdometry::recoverPose(const cv::Mat& e, cv::Mat& R, cv::Mat& t)
-	{
-		cv::Mat RR(3,3,CV_64F);
-		cv::Mat tt(3,1,CV_64F);
+		cv::Mat R(3,3,CV_64F);
+		cv::Mat t(3,1,CV_64F);
 		cv::SVD essentialSVD;
-		essentialSVD = essentialSVD(e);
+		essentialSVD = essentialSVD(retMat);
 
 		cv::Mat W = cv::Mat::zeros(3,3,CV_64F);
 
@@ -142,18 +139,31 @@ namespace odometry{
 		W.at<double>(1,0) = 1;
 		W.at<double>(2,2) = 1;
 
-		cv::Mat R1 = (essentialSVD.u)*W.t()*essentialSVD.vt;
 		cv::Mat R2 = (essentialSVD.u)*W*essentialSVD.vt;
 
 		if(cv::determinant(R2)+1.0 < 1e-9)
 		{
-			cv::Mat E = -1.00 * e;
-			essentialSVD = essentialSVD(E);
-			R1 = (essentialSVD.u)*W.t()*essentialSVD.vt;
-			R2 = (essentialSVD.u)*W*essentialSVD.vt;
+			retMat = -1.00 * retMat;
 		}
 
-		tt = essentialSVD.u.col(2);
+		return retMat.clone();
+	}
+
+	void MonOdometry::recoverPose(const cv::Mat& e, cv::Mat& R, cv::Mat& t)
+	{
+		cv::Mat sigma,u,vt;
+		cv::SVD::compute(e,sigma,u,vt);
+
+		cv::Mat W = cv::Mat::zeros(3,3,CV_64F);
+		W.at<double>(0,1) = -1;
+		W.at<double>(1,0) = 1;
+		W.at<double>(2,2) = 1;
+
+		cv::Mat RR(3,3,CV_64F);
+		cv::Mat tt(3,1,CV_64F);
+		cv::Mat R1 = u*W.t()*vt;
+		cv::Mat R2 = u*W*vt;
+		tt = u.col(2);
 
 		cv::Mat P0(3,4,R.type()), P1(3,4,R.type()), P2(3,4,R.type()), P3(3,4,R.type()), P4(3,4,R.type());
 		P0 = cv::Mat::eye(3,4,CV_64F);
@@ -228,44 +238,28 @@ namespace odometry{
 		{
 			RR = R1;
 			tt = tt;
-			#ifdef DEBUG
-				std::cout << "good 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-				std::cout << std::string("**************************************");
-			#endif
 		}
 		else if(nzMask2 > nzMask1  && nzMask2> nzMask3  && nzMask2 > nzMask4)
 		{
 			RR = R1;
 			tt = -tt;
-			#ifdef DEBUG
-				std::cout << "good 2 !!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-				std::cout << std::string("**************************************");
-			#endif
 		}
 		else if(nzMask3 > nzMask2 && nzMask3 > nzMask1 && nzMask3 > nzMask4)
 		{
 			RR = R2;
 			tt = tt;
-			#ifdef DEBUG
-				std::cout << "good 3!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-				std::cout << std::string("**************************************");
-			#endif
 		}
 		else
 		{
 			RR = R2;
 			tt = -tt;
-			#ifdef DEBUG
-				std::cout << "good 4 !!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-				std::cout << std::string("**************************************");
-			#endif
 		}
 
 		#ifdef DEBUG
 			std::cout << "R1: " << std::endl << R1 << std::endl;
 			std::cout << "R2: " << std::endl << R2 << std::endl;
-			debugFile << "\n" << "SVD::U \n" << essentialSVD.u << "\n";
-			debugFile << "\n" << "SVD::Vt \n" << essentialSVD.vt << "\n";
+			debugFile << "\n" << "SVD::U \n" << u << "\n";
+			debugFile << "\n" << "SVD::Vt \n" << vt << "\n";
 			debugFile << "\n" << "R1: \n" << R1 << "\n";
 			debugFile << "\n" << "R2: \n" << R2 << "\n";
 			debugFile << "\n" << "t: \n" << tt << "\n";
@@ -273,7 +267,6 @@ namespace odometry{
 		
 		R = RR.clone();
 		t = tt.clone();
-
 	}
 
 	void MonOdometry::calculateMotion(cv::Mat& R, cv::Mat& t)
@@ -321,18 +314,17 @@ namespace odometry{
      		#endif
 
      		// Estimating Fundamental Matrix
- 		   //  double fx = cameraMatrix_.at<double>(0,0);
-		    // double fy = cameraMatrix_.at<double>(1,1);
-		    // double cx = cameraMatrix_.at<double>(0,2);
-		    // double cy = cameraMatrix_.at<double>(1,2);
-     	// 	for (int i =0; i < corners_.size(); ++i)
-     	// 	{
-     	// 		corners_[i].x = (corners_[i].x - cx) / fx;
-     	// 		corners_[i].y = (corners_[i].y - cy) / fy;
-     	// 		tracked_features_[i].x = (tracked_features_[i].x - cx) / fx;
-     	// 		tracked_features_[i].y = (tracked_features_[i].y - cy) / fy;
- 
-     	// 	}
+ 		    double fx = cameraMatrix_.at<double>(0,0);
+		    double fy = cameraMatrix_.at<double>(1,1);
+		    double cx = cameraMatrix_.at<double>(0,2);
+		    double cy = cameraMatrix_.at<double>(1,2);
+     		for (int i =0; i < corners_.size(); ++i)
+     		{
+     			corners_[i].x = (corners_[i].x - cx) / fx;
+     			corners_[i].y = (corners_[i].y - cy) / fy;
+     			tracked_features_[i].x = (tracked_features_[i].x - cx) / fx;
+     			tracked_features_[i].y = (tracked_features_[i].y - cy) / fy;
+     		}
 
      		fundamentalMatrix_ = findFundamentalMat(corners_, tracked_features_);
 
@@ -343,24 +335,43 @@ namespace odometry{
 
      		#ifdef DEBUG
      			std::cerr << std::endl << "camera matrix: " << std::endl << cameraMatrix_ << std::endl;
-     			debugFile << std::endl << "camera matrix: " << std::endl << cameraMatrix_ << std::endl;
+     			// debugFile << std::endl << "camera matrix: " << std::endl << cameraMatrix_ << std::endl;
      		#endif
 
      		// Estimating Essential Matrix
-     		essentialMatrix_ = findEssentialMatrix(fundamentalMatrix_, cameraMatrix_);
-     		// essentialMatrix_ = fundamentalMatrix_;
+     		essentialMatrix_ = findEssentialMatrix(fundamentalMatrix_, cameraMatrix_);     		
 
      		#ifdef DEBUG
      			std::cerr << std::endl << "essential matrix: " << std::endl << essentialMatrix_ << std::endl;
      			debugFile << std::endl << "essential matrix: " << std::endl << essentialMatrix_ << std::endl;
      		#endif
 
-     		recoverPose(essentialMatrix_, R_, t_);
+     		#ifdef DEBUG_L2
+	 		   // 	double fx = cameraMatrix_.at<double>(0,0);
+			    // double fy = cameraMatrix_.at<double>(1,1);
+			    // double cx = cameraMatrix_.at<double>(0,2);
+			    // double cy = cameraMatrix_.at<double>(1,2);
+			    cv::Mat E_cv3;
+     			E_cv3 = cv::findEssentialMat(corners_, tracked_features_, fx, cv::Point2d(cx, cy));
+     			std::cout << "e: " << std::endl << essentialMatrix_ << std::endl;
+     			std::cout << "E_cv3: " << std::endl << E_cv3 << std::endl;
+
+     			for (int i = 0; i < 9; ++i)
+     			{
+     				if(essentialMatrix_.at<double>(i) != E_cv3.at<double>(i))
+     					std::cout << "Non Matching essentials!!!" << std::endl;
+     			}
+
+     			
+     		#endif 
+
+     		// recoverPose(essentialMatrix_, R_, t_);
+     			cv::recoverPose(E_cv3, corners_, tracked_features_, R_, t_, fx, cv::Point2d(cx, cy));
 
      		#ifdef DEBUG
      			debugFile << std::endl << "R: " << std::endl << R_ << std::endl;
      			debugFile << std::endl << "t: " << std::endl << t_ << std::endl;
-     			debugFile << std::string("-",30) << std::endl;
+     			debugFile << std::string(30, '-') << std::endl;
      		#endif
 
      		R = R_.clone();
