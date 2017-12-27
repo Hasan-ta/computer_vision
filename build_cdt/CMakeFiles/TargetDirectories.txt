@@ -1,0 +1,12 @@
+/home/hasan/Desktop/computer_vision/build_cdt/CMakeFiles/edit_cache.dir
+/home/hasan/Desktop/computer_vision/build_cdt/CMakeFiles/rebuild_cache.dir
+/home/hasan/Desktop/computer_vision/build_cdt/CMakeFiles/externals.dir
+/home/hasan/Desktop/computer_vision/build_cdt/kitti_tools/custom_tools/CMakeFiles/edit_cache.dir
+/home/hasan/Desktop/computer_vision/build_cdt/kitti_tools/custom_tools/CMakeFiles/rebuild_cache.dir
+/home/hasan/Desktop/computer_vision/build_cdt/kitti_tools/custom_tools/CMakeFiles/KittiOdometryIO_test.dir
+/home/hasan/Desktop/computer_vision/build_cdt/odometry/monocular/CMakeFiles/edit_cache.dir
+/home/hasan/Desktop/computer_vision/build_cdt/odometry/monocular/CMakeFiles/rebuild_cache.dir
+/home/hasan/Desktop/computer_vision/build_cdt/odometry/monocular/CMakeFiles/monOdometry_test.dir
+/home/hasan/Desktop/computer_vision/build_cdt/utils/logger/CMakeFiles/edit_cache.dir
+/home/hasan/Desktop/computer_vision/build_cdt/utils/logger/CMakeFiles/rebuild_cache.dir
+/home/hasan/Desktop/computer_vision/build_cdt/utils/logger/CMakeFiles/logger_test.dir

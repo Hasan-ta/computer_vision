@@ -326,7 +326,7 @@ namespace odometry{
      			tracked_features_[i].y = (tracked_features_[i].y - cy) / fy;
      		}
 
-     		fundamentalMatrix_ = findFundamentalMat(corners_, tracked_features_);
+     		fundamentalMatrix_ = findFundamentalMat(corners_, tracked_features_, CV_FM_8POINT);
 
      		#ifdef DEBUG
      			std::cerr << std::endl << "fundamental matrix: " << std::endl << fundamentalMatrix_ << std::endl;
@@ -354,6 +354,10 @@ namespace odometry{
 			    cv::Mat E_cv3;
      			E_cv3 = cv::findEssentialMat(corners_, tracked_features_, fx, cv::Point2d(cx, cy));
      			std::cout << "e: " << std::endl << essentialMatrix_ << std::endl;
+     			cv::Mat ff;
+     			ff = cameraMatrix_.t().inv() * E_cv3 * cameraMatrix_.inv();
+     			std::cout << "f: " << std::endl << fundamentalMatrix_ << std::endl;
+     			std::cout << "ff: " << std::endl << ff << std::endl;
      			std::cout << "E_cv3: " << std::endl << E_cv3 << std::endl;
 
      			for (int i = 0; i < 9; ++i)
