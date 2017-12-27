@@ -1,6 +1,5 @@
 data/
-build/
-build_d/
+build*
 external/
 literature/
 
